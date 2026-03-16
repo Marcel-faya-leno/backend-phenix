@@ -18,16 +18,28 @@ const adminRoutes = require('./routes/admin');
 
 const app = express();
 const server = http.createServer(app);
+
+// CORS Origins - Localhost + Production
+const allowedOrigins = [
+    // Development
+    "http://localhost:5500",
+    "http://localhost:3000",
+    "http://localhost:5501",
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:5501",
+    "http://127.0.0.1:3000",
+    // Production
+    "https://front-phenix.netlify.app",
+    "https://phenix-tech.com",
+    // Environment variable
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
+console.log('✓ CORS Origins Allowed:', allowedOrigins);
+
 const io = socketIo(server, {
     cors: {
-        origin: [
-            process.env.FRONTEND_URL || "http://localhost:5500",
-            "http://localhost:3000",
-            "http://localhost:5501",
-            "http://127.0.0.1:5500",
-            "http://127.0.0.1:5501",
-            "http://127.0.0.1:3000"
-        ],
+        origin: allowedOrigins,
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true
     },
@@ -36,22 +48,29 @@ const io = socketIo(server, {
 
 // Middleware CORS
 app.use(cors({
-    origin: [
-        process.env.FRONTEND_URL || "http://localhost:5500",
-        "http://localhost:3000",
-        "http://localhost:5501",
-        "http://127.0.0.1:5500",
-        "http://127.0.0.1:5501",
-        "http://127.0.0.1:3000"
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200
 }));
 
 // Traiter les requêtes OPTIONS explicitement
 app.options('*', cors());
+
+// Headers sécurisés (sans CSP trop restrictive)
+app.use((req, res, next) => {
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'SAMEORIGIN');
+    res.header('X-XSS-Protection', '1; mode=block');
+    // CSP permissive pour fetch API depuis Netlify
+    res.header(
+        'Content-Security-Policy',
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://backend-phenix.onrender.com wss: ws:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';"
+    );
+    next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

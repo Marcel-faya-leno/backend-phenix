@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 const bcryptjs = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Middleware pour mettre à jour la date de modification
+// Middleware pour mettre Ã  jour la date de modification
 userSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     next();

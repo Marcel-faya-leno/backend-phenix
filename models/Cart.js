@@ -1,4 +1,4 @@
-// models/Cart.js
+﻿// models/Cart.js
 const mongoose = require('mongoose');
 
 const cartSchema = new mongoose.Schema({
@@ -37,7 +37,7 @@ const cartSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Méthode pour obtenir le total du panier
+// MÃ©thode pour obtenir le total du panier
 cartSchema.methods.getTotal = async function() {
     const populated = await this.populate('items.productId');
     return populated.items.reduce((total, item) => {
@@ -45,7 +45,7 @@ cartSchema.methods.getTotal = async function() {
     }, 0);
 };
 
-// Méthode pour ajouter un produit
+// MÃ©thode pour ajouter un produit
 cartSchema.methods.addItem = function(productId, quantity = 1) {
     const existingItem = this.items.find(item => item.productId.toString() === productId.toString());
     
@@ -64,13 +64,13 @@ cartSchema.methods.addItem = function(productId, quantity = 1) {
     return this.save();
 };
 
-// Méthode pour supprimer un produit
+// MÃ©thode pour supprimer un produit
 cartSchema.methods.removeItem = function(productId) {
     this.items = this.items.filter(item => item.productId.toString() !== productId.toString());
     return this.save();
 };
 
-// Méthode pour vider le panier
+// MÃ©thode pour vider le panier
 cartSchema.methods.clear = function() {
     this.items = [];
     return this.save();

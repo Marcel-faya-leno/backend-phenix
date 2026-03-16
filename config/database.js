@@ -1,4 +1,4 @@
-// config/database.js
+﻿// config/database.js
 const mongoose = require('mongoose');
 
 const connectDB = async (options = {}) => {
@@ -8,7 +8,7 @@ const connectDB = async (options = {}) => {
     
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-            console.log(`🔗 Tentative de connexion MongoDB (${attempt}/${retries})...`);
+            console.log(`ðŸ”— Tentative de connexion MongoDB (${attempt}/${retries})...`);
             
             await mongoose.connect(MONGODB_URI, {
                 useNewUrlParser: true,
@@ -17,40 +17,40 @@ const connectDB = async (options = {}) => {
                 socketTimeoutMS: 45000,
             });
             
-            console.log('✅ MongoDB connecté avec succès');
+            console.log('âœ… MongoDB connectÃ© avec succÃ¨s');
             return mongoose.connection;
             
         } catch (error) {
-            console.error(`❌ Échec de connexion MongoDB (tentative ${attempt}/${retries}):`, error.message);
+            console.error(`âŒ Ã‰chec de connexion MongoDB (tentative ${attempt}/${retries}):`, error.message);
             
             if (attempt < retries) {
-                console.log(`⏳ Nouvelle tentative dans ${delayMs/1000} secondes...`);
+                console.log(`â³ Nouvelle tentative dans ${delayMs/1000} secondes...`);
                 await new Promise(resolve => setTimeout(resolve, delayMs));
             } else {
-                console.log('⚠️ Mode démo activé - Base de données non connectée');
-                // Ne pas lancer d'erreur pour permettre le mode démo
+                console.log('âš ï¸ Mode dÃ©mo activÃ© - Base de donnÃ©es non connectÃ©e');
+                // Ne pas lancer d'erreur pour permettre le mode dÃ©mo
                 return null;
             }
         }
     }
 };
 
-// Gestionnaire d'événements de connexion
+// Gestionnaire d'Ã©vÃ©nements de connexion
 mongoose.connection.on('connected', () => {
-    console.log('✅ Mongoose connecté à MongoDB');
+    console.log('âœ… Mongoose connectÃ© Ã  MongoDB');
 });
 
 mongoose.connection.on('error', (err) => {
-    console.error('❌ Erreur de connexion Mongoose:', err);
+    console.error('âŒ Erreur de connexion Mongoose:', err);
 });
 
 mongoose.connection.on('disconnected', () => {
-    console.log('⚠️ Mongoose déconnecté de MongoDB');
+    console.log('âš ï¸ Mongoose dÃ©connectÃ© de MongoDB');
 });
 
 process.on('SIGINT', async () => {
     await mongoose.connection.close();
-    console.log('⏹️ Connexion MongoDB fermée (SIGINT)');
+    console.log('â¹ï¸ Connexion MongoDB fermÃ©e (SIGINT)');
     process.exit(0);
 });
 

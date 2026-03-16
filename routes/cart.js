@@ -309,9 +309,9 @@ router.put('/:userId/update', async (req, res) => {
 });
 
 // DELETE retirer du panier (sans userId)
-router.delete('/remove', async (req, res) => {
+router.delete('/remove/:productId', async (req, res) => {
     try {
-        const { productId } = req.body;
+        const productId = req.params.productId;
         const userId = getUserId(req);
         
         if (!productId) {
@@ -347,9 +347,9 @@ router.delete('/remove', async (req, res) => {
 });
 
 // DELETE retirer du panier (avec userId)
-router.delete('/:userId/remove', async (req, res) => {
+router.delete('/:userId/remove/:productId', async (req, res) => {
     try {
-        const { productId } = req.body;
+        const productId = req.params.productId;
         const userId = req.params.userId;
         
         if (!productId) {

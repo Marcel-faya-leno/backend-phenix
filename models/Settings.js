@@ -1,16 +1,16 @@
-// models/Settings.js
+﻿// models/Settings.js
 const mongoose = require('mongoose');
 
 const SettingsSchema = new mongoose.Schema({
     // Configuration du site
-    siteName: { type: String, default: 'PHENIX TECH-SERVICES' },
+    siteName: { type: String, default: 'PHENIX-TECH-SERVICES' },
     siteDescription: { type: String, default: 'Votre partenaire technologique' },
     siteLogo: { type: String, default: '' },
     siteEmail: { type: String, default: 'contact@phenixtech.com' },
     sitePhone: { type: String, default: '+225' },
     siteAddress: { type: String, default: '' },
 
-    // Paramètres logistiques
+    // ParamÃ¨tres logistiques
     shippingFee: { type: Number, default: 0 },
     shippingFreeAbove: { type: Number, default: 50000 },
     shippingDelay: { type: String, default: '2-3 jours' },
@@ -33,7 +33,7 @@ const SettingsSchema = new mongoose.Schema({
         }, { _id: false }),
         cash: new mongoose.Schema({
             enabled: { type: Boolean, default: false },
-            description: { type: String, default: 'Paiement à la livraison' }
+            description: { type: String, default: 'Paiement Ã  la livraison' }
         }, { _id: false })
     }, { _id: false }),
 
@@ -65,7 +65,7 @@ const SettingsSchema = new mongoose.Schema({
         }, { _id: false })
     }, { _id: false }),
 
-    // Sécurité
+    // SÃ©curitÃ©
     security: new mongoose.Schema({
         requireEmailVerification: { type: Boolean, default: true },
         requirePhoneVerification: { type: Boolean, default: false },
@@ -82,7 +82,7 @@ const SettingsSchema = new mongoose.Schema({
         warrantySetting: { type: String, default: '' }
     }, { _id: false }),
 
-    // Thème
+    // ThÃ¨me
     theme: new mongoose.Schema({
         primaryColor: { type: String, default: '#2A5CAA' },
         secondaryColor: { type: String, default: '#FF6B35' },
@@ -104,13 +104,13 @@ const SettingsSchema = new mongoose.Schema({
         maintenanceMessage: { type: String, default: 'Le site est en maintenance' }
     }, { _id: false }),
 
-    // Métadonnées
+    // MÃ©tadonnÃ©es
     lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', default: null },
     updatedAt: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Middleware pour mettre à jour updatedAt
+// Middleware pour mettre Ã  jour updatedAt
 SettingsSchema.pre('save', function(next) {
     this.updatedAt = new Date();
     next();

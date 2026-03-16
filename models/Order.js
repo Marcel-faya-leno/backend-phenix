@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
     userId: {
-        type: String,  // Peut être string (anonymous-xxx) ou MongoDB ObjectId
+        type: String,  // Peut Ãªtre string (anonymous-xxx) ou MongoDB ObjectId
         required: true
     },
     items: [{
@@ -67,7 +67,7 @@ const orderSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Méthode statique pour mettre à jour le statut de paiement
+// MÃ©thode statique pour mettre Ã  jour le statut de paiement
 orderSchema.statics.updatePaymentStatus = async function(orderId, status, transactionId, provider) {
     try {
         const order = await this.findByIdAndUpdate(

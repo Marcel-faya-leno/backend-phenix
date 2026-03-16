@@ -1,4 +1,4 @@
-// models/Admin.js
+﻿// models/Admin.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -48,12 +48,12 @@ adminSchema.pre('save', async function(next) {
     }
 });
 
-// Méthode pour comparer les mots de passe
+// MÃ©thode pour comparer les mots de passe
 adminSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Méthode pour masquer le mot de passe dans les réponses
+// MÃ©thode pour masquer le mot de passe dans les rÃ©ponses
 adminSchema.methods.toJSON = function() {
     const obj = this.toObject();
     delete obj.password;

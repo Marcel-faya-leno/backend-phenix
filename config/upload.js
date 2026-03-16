@@ -1,8 +1,8 @@
-const multer = require('multer');
+﻿const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Créer le dossier uploads s'il n'existe pas
+// CrÃ©er le dossier uploads s'il n'existe pas
 const uploadDir = 'uploads/products';
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -28,7 +28,7 @@ const fileFilter = (req, file, cb) => {
     if (mimetype && extname) {
         return cb(null, true);
     } else {
-        cb(new Error('Seules les images sont autorisées (jpeg, jpg, png, gif, webp)'));
+        cb(new Error('Seules les images sont autorisÃ©es (jpeg, jpg, png, gif, webp)'));
     }
 };
 

@@ -1,4 +1,4 @@
-// models/Product.js
+﻿// models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
@@ -65,12 +65,12 @@ const productSchema = new mongoose.Schema({
 productSchema.index({ name: 'text', description: 'text', category: 'text' });
 productSchema.index({ status: 1, category: 1 });
 
-// Méthode pour vérifier le stock
+// MÃ©thode pour vÃ©rifier le stock
 productSchema.methods.isInStock = function() {
     return this.stock > 0;
 };
 
-// Méthode pour réduire le stock
+// MÃ©thode pour rÃ©duire le stock
 productSchema.methods.reduceStock = function(quantity) {
     if (this.stock >= quantity) {
         this.stock -= quantity;
