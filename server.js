@@ -115,6 +115,19 @@ app.use('/api/admin', adminRoutes);
 app.get('/api/health', (req, res) => {
     res.json({ success: true, message: 'Serveur en bon état' });
 });
+// Route racine (accueil API)
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'API PHENIX TECH active 🚀',
+        endpoints: {
+            products: '/api/products',
+            auth: '/api/auth',
+            cart: '/api/cart',
+            payments: '/api/payments'
+        }
+    });
+});
 
 // Gestion des erreurs 404
 app.use((req, res) => {
