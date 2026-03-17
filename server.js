@@ -28,23 +28,44 @@ const allowedOrigins = [
     "http://127.0.0.1:5500",
     "http://127.0.0.1:5501",
     "http://127.0.0.1:3000",
+
     // Production
     "https://front-phenix.netlify.app",
     "https://phenix-tech.com",
-    // Environment variable
+    "https://phenix-tech-services.netlify.app", // ✅ AJOUTÉ
+
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
 console.log('✓ CORS Origins Allowed:', allowedOrigins);
 
-const io = socketIo(server, {
-    cors: {
-        origin: allowedOrigins,
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: true
+// Middleware CORS amélioré (gère Netlify automatiquement)
+app.use(cors({
+    origin: function(origin, callback) {
+        // Autoriser les requêtes sans origin (Postman, mobile apps)
+        if (!origin) return callback(null, true);
+
+        // Autoriser les origins définis
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Autoriser TOUS les sous-domaines Netlify (important)
+        if (origin.includes('netlify.app')) {
+            return callback(null, true);
+        }
+
+        console.warn('❌ CORS bloqué pour:', origin);
+        callback(new Error('Not allowed by CORS'));
     },
-    transports: ['websocket', 'polling']
-});
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    optionsSuccessStatus: 200
+}));
+
+// Traiter les requêtes OPTIONS
+app.options('*', cors());
 
 // Middleware CORS
 app.use(cors({
