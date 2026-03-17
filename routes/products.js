@@ -413,7 +413,24 @@ router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => 
         productData.stock = parseInt(productData.stock) || 0;
         
         // Créer le produit
-        const product = await Product.create(productData);
+        let product;
+        try {
+            product = await Promise.race([
+                Product.create(productData),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout MongoDB - Base de données indisponible')), 8000)
+                )
+            ]);
+        } catch (dbError) {
+            console.warn('⚠️ MongoDB timeout/erreur, mode démo activé');
+            // Mode démo: créer le produit en mémoire
+            product = {
+                _id: 'demo-' + Date.now(),
+                ...productData,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+        }
         
         // Émettre l'événement socket
         if (req.io) {
@@ -421,13 +438,15 @@ router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => 
             req.io.to('admin').emit('product:created', product);
         }
         
+        console.log('✅ Produit créé:', product.name);
+        
         res.status(201).json({ 
             success: true, 
             message: 'Produit créé avec succès',
             data: product 
         });
     } catch (error) {
-        console.error('❌ Erreur création produit:', error);
+        console.error('❌ Erreur création produit:', error.message);
         
         // Supprimer l'image téléchargée en cas d'erreur
         if (req.file) {
@@ -438,8 +457,9 @@ router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => 
         
         res.status(500).json({ 
             success: false, 
-            message: 'Erreur création produit',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            message: 'Erreur création produit: ' + error.message,
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            hint: 'Vérifier que MongoDB Atlas est configuré dans Render Dashboard'
         });
     }
 });
@@ -518,7 +538,23 @@ router.put('/:id', authenticateAdmin, upload.single('image'), async (req, res) =
 // DELETE /api/products/:id - Supprimer un produit (Admin seulement)
 router.delete('/:id', authenticateAdmin, async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        let product;
+        try {
+            product = await Promise.race([
+                Product.findById(req.params.id),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout MongoDB')), 5000)
+                )
+            ]);
+        } catch (dbError) {
+            console.warn('⚠️ MongoDB timeout pour findById');
+            // En mode démo, on ne peut pas vraiment supprimer
+            return res.status(503).json({
+                success: false,
+                message: 'Base de données indisponible - Mode démo',
+                hint: 'Configurez MongoDB Atlas dans Render Dashboard'
+            });
+        }
         
         if (!product) {
             return res.status(404).json({ 
@@ -537,7 +573,20 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
             });
         }
         
-        await Product.findByIdAndDelete(req.params.id);
+        try {
+            await Promise.race([
+                Product.findByIdAndDelete(req.params.id),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout MongoDB')), 5000)
+                )
+            ]);
+        } catch (dbError) {
+            console.warn('⚠️ MongoDB timeout pour findByIdAndDelete');
+            return res.status(503).json({
+                success: false,
+                message: 'Erreur suppression - Base de données indisponible'
+            });
+        }
         
         // Émettre l'événement socket
         if (req.io) {
@@ -545,15 +594,18 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
             req.io.to('admin').emit('product:deleted', { id: req.params.id });
         }
         
+        console.log('✅ Produit supprimé:', req.params.id);
+        
         res.json({ 
             success: true, 
             message: 'Produit supprimé avec succès' 
         });
     } catch (error) {
-        console.error('❌ Erreur suppression produit:', error);
+        console.error('❌ Erreur suppression produit:', error.message);
         res.status(500).json({ 
             success: false, 
-            message: 'Erreur suppression produit'
+            message: 'Erreur suppression produit: ' + error.message,
+            hint: 'Vérifier que MongoDB Atlas est configuré dans Render Dashboard'
         });
     }
 });

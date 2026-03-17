@@ -1,8 +1,8 @@
-﻿// productController.js - ContrÃ´leur pour les produits
+﻿// productController.js - Contrôleur pour les produits
 const Product = require('../models/Product');
 
 const productController = {
-    // RÃ©cupÃ©rer tous les produits
+    // Récupérer tous les produits
     async getAllProducts(req, res) {
         try {
             const { page = 1, limit = 20, category, search } = req.query;
@@ -33,20 +33,20 @@ const productController = {
         }
     },
 
-    // RÃ©cupÃ©rer un produit par ID
+    // Récupérer un produit par ID
     async getProductById(req, res) {
         try {
             const product = await Product.findById(req.params.id);
             if (!product) {
-                return res.status(404).json({ error: 'Produit non trouvÃ©' });
+                return res.status(404).json({ success: false, error: 'Produit non trouvé' });
             }
-            res.json(product);
+            res.json({ success: true, data: product });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ success: false, error: error.message });
         }
     },
 
-    // CrÃ©er un produit (Admin)
+    // Créer un produit (Admin)
     async createProduct(req, res) {
         try {
             const { name, description, price, category, image, stock } = req.body;
@@ -62,13 +62,14 @@ const productController = {
             });
 
             await product.save();
-            res.status(201).json({ message: 'Produit crÃ©Ã©', product });
+            res.status(201).json({ success: true, message: 'Produit créé', data: product });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            console.error('❌ Erreur création produit:', error.message);
+            res.status(500).json({ success: false, message: 'Erreur création produit', error: error.message });
         }
     },
 
-    // Mettre Ã  jour un produit (Admin)
+    // Mettre à jour un produit (Admin)
     async updateProduct(req, res) {
         try {
             const product = await Product.findByIdAndUpdate(
@@ -76,9 +77,10 @@ const productController = {
                 req.body,
                 { new: true, runValidators: true }
             );
-            res.json({ message: 'Produit mis Ã  jour', product });
+            res.json({ success: true, message: 'Produit mis à jour', data: product });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            console.error('❌ Erreur mise à jour produit:', error.message);
+            res.status(500).json({ success: false, message: 'Erreur mise à jour produit', error: error.message });
         }
     },
 
@@ -86,9 +88,10 @@ const productController = {
     async deleteProduct(req, res) {
         try {
             await Product.findByIdAndDelete(req.params.id);
-            res.json({ message: 'Produit supprimÃ©' });
+            res.json({ success: true, message: 'Produit supprimé' });
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            console.error('❌ Erreur suppression produit:', error.message);
+            res.status(500).json({ success: false, message: 'Erreur suppression produit', error: error.message });
         }
     }
 };
