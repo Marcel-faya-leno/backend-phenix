@@ -39,8 +39,17 @@ const allowedOrigins = [
 
 console.log('✓ CORS Origins Allowed:', allowedOrigins);
 
-// Middleware CORS amélioré (gère Netlify automatiquement)
-app.use(cors({
+// ✅ Initialiser Socket.io avec CORS
+const io = socketIo(server, {
+    cors: {
+        origin: allowedOrigins,
+        credentials: true,
+        methods: ['GET', 'POST']
+    },
+    transports: ['websocket', 'polling']
+});
+
+const corsOptions = {
     origin: function(origin, callback) {
         // Autoriser les requêtes sans origin (Postman, mobile apps)
         if (!origin) return callback(null, true);
@@ -61,24 +70,13 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    optionsSuccessStatus: 200
-}));
-
-// Traiter les requêtes OPTIONS
-app.options('*', cors());
-
-// Middleware CORS
-app.use(cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     exposedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200
-}));
+};
 
-// Traiter les requêtes OPTIONS explicitement
-app.options('*', cors());
+// Middleware CORS
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Headers sécurisés (sans CSP trop restrictive)
 app.use((req, res, next) => {
