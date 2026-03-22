@@ -308,6 +308,73 @@ router.put('/:userId/update', async (req, res) => {
     }
 });
 
+// PUT mettre à jour la quantité (avec productId) - cherche le panier de l'utilisateur
+router.put('/update/:productId', async (req, res) => {
+    try {
+        const productId = req.params.productId;
+        let { quantity } = req.body;
+        
+        // Accepter aussi quantity de query params
+        if (!quantity && req.query.quantity) {
+            quantity = req.query.quantity;
+        }
+
+        // Récupérer l'ID utilisateur
+        const userId = getUserId(req);
+        
+        if (!quantity && quantity !== 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Quantité est requis' 
+            });
+        }
+
+        // Valider la quantité
+        const parsedQuantity = parseInt(quantity);
+        if (isNaN(parsedQuantity)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Quantité invalide' 
+            });
+        }
+
+        // Trouver le panier de l'utilisateur
+        let cart = await Cart.findOne({ userId: userId });
+        if (!cart) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Panier non trouvé' 
+            });
+        }
+
+        // Mettre à jour la quantité
+        if (parsedQuantity < 1) {
+            await cart.removeItem(productId);
+        } else {
+            const item = cart.items.find(i => i.productId.toString() === productId.toString());
+            if (item) {
+                item.quantity = parsedQuantity;
+                item.updatedAt = new Date();
+            }
+            await cart.save();
+        }
+        
+        // Recharger avec les données du produit
+        cart = await Cart.findOne({ userId: userId }).populate('items.productId');
+        
+        req.io.emit('cart:updated', { userId, productId, quantity: parsedQuantity, action: 'update' });
+        
+        res.json({ 
+            success: true, 
+            message: 'Panier mis à jour',
+            data: cart
+        });
+    } catch (error) {
+        console.error('❌ PUT /update/:productId error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // DELETE retirer du panier (sans userId)
 router.delete('/remove/:productId', async (req, res) => {
     try {
