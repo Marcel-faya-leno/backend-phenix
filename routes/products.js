@@ -415,13 +415,6 @@ router.post('/', authenticateAdmin, upload.single('image'), uploadToCloudinary, 
     } catch (error) {
         console.error('❌ Erreur création produit:', error.message);
         
-        // Supprimer l'image téléchargée en cas d'erreur
-        if (req.file) {
-            fs.unlink(req.file.path, (err) => {
-                if (err) console.error('Erreur suppression image:', err);
-            });
-        }
-        
         res.status(500).json({ 
             success: false, 
             message: 'Erreur création produit: ' + error.message,
