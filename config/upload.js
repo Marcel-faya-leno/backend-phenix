@@ -1,23 +1,16 @@
 ﻿const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 
-// CrÃ©er le dossier uploads s'il n'existe pas
-const uploadDir = 'uploads/products';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configuration du stockage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
-    }
+// Configuration Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
+// Storage en mémoire (les fichiers seront envoyés à Cloudinary)
+const storage = multer.memoryStorage();
 
 // Filtre pour n'accepter que les images
 const fileFilter = (req, file, cb) => {
@@ -28,7 +21,7 @@ const fileFilter = (req, file, cb) => {
     if (mimetype && extname) {
         return cb(null, true);
     } else {
-        cb(new Error('Seules les images sont autorisÃ©es (jpeg, jpg, png, gif, webp)'));
+        cb(new Error('Seules les images sont autorisées (jpeg, jpg, png, gif, webp)'));
     }
 };
 
@@ -38,4 +31,41 @@ const upload = multer({
     fileFilter: fileFilter
 });
 
-module.exports = upload;
+// Middleware pour uploader vers Cloudinary
+const uploadToCloudinary = async (req, res, next) => {
+    if (!req.file) {
+        return next();
+    }
+
+    try {
+        // Créer une promise pour uploader vers Cloudinary
+        const result = await new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    folder: 'phenix-products',
+                    public_id: `product-${Date.now()}-${Math.round(Math.random() * 1E9)}`,
+                    resource_type: 'auto'
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            );
+
+            uploadStream.end(req.file.buffer);
+        });
+
+        // Stocker les infos Cloudinary dans req.file
+        req.file.cloudinary = result;
+        req.file.url = result.secure_url;
+        req.file.publicId = result.public_id;
+
+        console.log('✅ Image uploadée sur Cloudinary:', req.file.url);
+        next();
+    } catch (error) {
+        console.error('❌ Erreur upload Cloudinary:', error);
+        res.status(500).json({ success: false, message: 'Erreur lors de l\'upload: ' + error.message });
+    }
+};
+
+module.exports = { upload, uploadToCloudinary, cloudinary };

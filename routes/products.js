@@ -1,43 +1,9 @@
 // routes/products.js - API produits PHENIX-TECH-SERVICES
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 
-// Configuration du stockage Multer
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = 'uploads/products/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-// Filtrage des fichiers
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
-        return cb(null, true);
-    } else {
-        cb(new Error('Seules les images sont autorisées'));
-    }
-};
-
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: fileFilter
-});
+// Importer Cloudinary et multer
+const { upload, uploadToCloudinary } = require('../config/upload');
 
 // Importer le modèle Product (mode démo si MongoDB non disponible)
 let Product;
@@ -386,7 +352,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/products - Créer un nouveau produit (Admin seulement)
-router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => {
+router.post('/', authenticateAdmin, upload.single('image'), uploadToCloudinary, async (req, res) => {
     try {
         const productData = req.body;
         
@@ -398,9 +364,10 @@ router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => 
             });
         }
         
-        // Ajouter l'URL de l'image si téléchargée
-        if (req.file) {
-            productData.image_url = `/uploads/products/${req.file.filename}`;
+        // Ajouter l'URL de l'image si téléchargée (depuis Cloudinary)
+        if (req.file && req.file.url) {
+            productData.image_url = req.file.url;
+            productData.cloudinary_public_id = req.file.publicId;
         }
         
         // Convertir les spécifications si envoyées comme chaîne
@@ -465,7 +432,7 @@ router.post('/', authenticateAdmin, upload.single('image'), async (req, res) => 
 });
 
 // PUT /api/products/:id - Mettre à jour un produit (Admin seulement)
-router.put('/:id', authenticateAdmin, upload.single('image'), async (req, res) => {
+router.put('/:id', authenticateAdmin, upload.single('image'), uploadToCloudinary, async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
         
@@ -478,18 +445,10 @@ router.put('/:id', authenticateAdmin, upload.single('image'), async (req, res) =
         
         const updateData = req.body;
         
-        // Mettre à jour l'URL de l'image si une nouvelle image est téléchargée
-        if (req.file) {
-            // Supprimer l'ancienne image si elle existe
-            if (product.image_url && !product.image_url.startsWith('http')) {
-                const oldImagePath = path.join(__dirname, '..', product.image_url);
-                fs.unlink(oldImagePath, (err) => {
-                    if (err && err.code !== 'ENOENT') {
-                        console.error('Erreur suppression ancienne image:', err);
-                    }
-                });
-            }
-            updateData.image_url = `/uploads/products/${req.file.filename}`;
+        // Mettre à jour l'URL de l'image si une nouvelle image est téléchargée (depuis Cloudinary)
+        if (req.file && req.file.url) {
+            updateData.image_url = req.file.url;
+            updateData.cloudinary_public_id = req.file.publicId;
         }
         
         // Convertir les spécifications si envoyées comme chaîne
